@@ -1,7 +1,8 @@
 import pandas as pd     # for work with DataFrame
 import os               # module for making directory
 from sklearn.model_selection import train_test_split        # for splitting data
-import logging      # python inbiuld module      
+import logging      # python inbiuld module  
+import yaml    
 
 # Ensure the "logs" direcotry exists
 log_dir = "logs"        # we make sure we have a log directory where we save our all logs
@@ -37,6 +38,20 @@ file_handler.setFormatter(formatter)    # formatter given to the file handler to
 
 logger.addHandler(console_handler)      # putting "console_handler" inside logger object
 logger.addHandler(file_handler)         # putting "file_handler" inside logger object
+
+def load_params(params_path: str) -> dict:
+    """Load parameters from YAML file"""
+    try:
+        with open(params_path, "r") as file:
+            params= yaml.safe_load(file)
+        logger.debug("Parameters retrived from %s", params_path)
+        return params
+    except FileNotFoundError:
+        logger.error("file not found: %s", params_path)
+        raise
+    except yaml.YAMLError as e:
+        logger.error("Unexpected error: %s", e)
+        raise
 
 # Data Load function
 def load_data(data_url:str)   ->  pd.DataFrame: # takes url of data
@@ -92,7 +107,9 @@ def save_data(train_data: pd.DataFrame, test_data: pd.DataFrame, data_path: str)
 
 def main():
     try:
-        test_size = 0.2     # defining test size
+        params = load_params(params_path="params.yaml")
+        test_size = params["data_ingestion"]["test_size"]
+        # test_size = 0.2     # defining test size
         data_path = "https://raw.githubusercontent.com/vikashishere/Datasets/refs/heads/main/spam.csv"  # dataset path definde
         df = load_data(data_url=data_path)  # calling "load_data" function which takes an argument "data_url"
                                             # returns a data in DataFrame where we capture data in "df"
